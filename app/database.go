@@ -1,12 +1,10 @@
 package app
 
 import (
-	"fmt"
-	"os"
+	"errors"
 	"os/user"
 	"path"
 	"github.com/syndtr/goleveldb/leveldb"
-	"github.com/olekukonko/tablewriter"
 )
 
 func GetDatabase() (*leveldb.DB, error) {
@@ -23,13 +21,37 @@ func GetDatabase() (*leveldb.DB, error) {
 	return db, err
 }
 
+func FetchCheckpoint(name string) (string, error) {
+	db, err := GetDatabase()
+	if err != nil {
+		return "", err
+	}
+
+	defer db.Close()
+	path, err := db.Get([]byte(name), nil)
+	if err != nil {
+		if err == leveldb.ErrNotFound{
+			return "", errors.New("jump: Checkpoint not found")
+		}
+	return "", err
+	}
+
+	return string(path), nil
+}
+
 func AddCheckpoint(name string, path string) error {
+	walk, err := FetchCheckpoint(name)
+	if len(walk) > 0 {
+		return errors.New("jump: Checkpoint already exists")
+	}
+
 	db, err := GetDatabase()
 	if err != nil {
 		return err
 	}
 
 	defer db.Close()
+
 	err = db.Put([]byte(name), []byte(path), nil)
 	if err != nil {
 		return err
@@ -39,6 +61,11 @@ func AddCheckpoint(name string, path string) error {
 }
 
 func RemoveCheckpoint(name string) error {
+	walk, err := FetchCheckpoint(name)
+	if len(walk) == 0 {
+		return errors.New("jump: Checkpoint doesn't exist")
+	}
+
 	db, err := GetDatabase()
 	if err != nil {
 		return err
@@ -53,16 +80,13 @@ func RemoveCheckpoint(name string) error {
 	return nil
 }
 
-func ShowCheckpoints() error {
+func ShowCheckpoints() (Checkpoints, error) {
 	db, err := GetDatabase()
+	checkpoints := Checkpoints{}
+
 	if err != nil {
-		return err
+		return checkpoints, err
 	}
-
-	count := 0
-
-	table := tablewriter.NewWriter(os.Stdout)
-	table.SetHeader([]string{"Name", "Path"})
 
 	defer db.Close()
 	iter := db.NewIterator(nil, nil)
@@ -70,32 +94,14 @@ func ShowCheckpoints() error {
 		key := iter.Key()
 		value := iter.Value()
 
-		table.Append([]string{string(key), string(value)})
-		count+=1
+		checkpoints = append(checkpoints, Checkpoint{Name: string(key), Path: string(value),})
 	}
 	iter.Release()
 
 	err = iter.Error()
 	if err != nil {
-		return err
+		return checkpoints, err
 	}
 
-	fmt.Printf("%v Checkpoints Found\n", count)
-	table.Render()
-	return nil
-}
-
-func FetchCheckpoint(name string) (string, error) {
-	db, err := GetDatabase()
-	if err != nil {
-		return "", err
-	}
-
-	defer db.Close()
-	path, err := db.Get([]byte(name), nil)
-	if err != nil {
-		return "", err
-	}
-
-	return string(path), nil
+	return checkpoints, nil
 }
