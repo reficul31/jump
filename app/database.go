@@ -2,9 +2,11 @@ package app
 
 import (
 	"fmt"
+	"os"
 	"os/user"
 	"path"
 	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/olekukonko/tablewriter"
 )
 
 func GetDatabase() (*leveldb.DB, error) {
@@ -57,19 +59,29 @@ func ShowCheckpoints() error {
 		return err
 	}
 
+	count := 0
+
+	table := tablewriter.NewWriter(os.Stdout)
+	table.SetHeader([]string{"Name", "Path"})
+
 	defer db.Close()
 	iter := db.NewIterator(nil, nil)
 	for iter.Next() {
 		key := iter.Key()
 		value := iter.Value()
-		fmt.Println(string(key), string(value))
+
+		table.Append([]string{string(key), string(value)})
+		count+=1
 	}
 	iter.Release()
-	
+
 	err = iter.Error()
 	if err != nil {
 		return err
 	}
+
+	fmt.Printf("%v Checkpoints Found\n", count)
+	table.Render()
 	return nil
 }
 

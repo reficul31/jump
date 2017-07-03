@@ -1,7 +1,7 @@
 package main
 
 import (
-  "fmt"
+  "log"
   "github.com/reficul31/jump/app"
   "github.com/urfave/cli"
   "path/filepath"
@@ -14,10 +14,10 @@ func PopulateCommands(jump *cli.App) {
   jump.Action = func(c *cli.Context) {
     path, err := app.FetchCheckpoint(c.Args().Get(0))
     if err != nil {
-      fmt.Println(err)
+      log.Println(err)
       return
     }
-    fmt.Println(path)
+    log.Println(path)
     return
   }
 
@@ -29,12 +29,12 @@ func PopulateCommands(jump *cli.App) {
       Action: func(c *cli.Context) {
         dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
         if err != nil {
-          fmt.Println("cannot find the current directory")
+          log.Println("cannot find the current directory")
           return
         }
         err = app.AddCheckpoint(c.Args().First(), dir)
         if err != nil {
-          fmt.Println(err)
+          log.Println(err)
           return
         }
         return
@@ -47,7 +47,7 @@ func PopulateCommands(jump *cli.App) {
       Action: func(c *cli.Context) {
         err = app.RemoveCheckpoint(c.Args().First())
         if err != nil {
-          fmt.Println(err)
+          log.Println(err)
           return
         }
         return
@@ -60,7 +60,7 @@ func PopulateCommands(jump *cli.App) {
       Action: func(c *cli.Context) {
         err = app.ShowCheckpoints()
         if err != nil {
-          fmt.Println(err)
+          log.Println(err)
           return
         }
         return
