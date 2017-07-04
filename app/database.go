@@ -2,23 +2,42 @@ package app
 
 import (
 	"errors"
+	"os"
 	"os/user"
 	"path"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
-func GetDatabase() (*leveldb.DB, error) {
+func GetDatabasePath() (string, error) {
 	usr, err := user.Current()
+	if err != nil {
+		return "", err
+	}
+	return path.Join(usr.HomeDir, ".jmpdata"), nil
+}
+
+func GetDatabase() (*leveldb.DB, error) {
+	databasePath, err := GetDatabasePath()
 	if err != nil {
 		return nil, err
 	}
-	databasePath := path.Join(usr.HomeDir, ".jmpdata")
+
 	db, err := leveldb.OpenFile(databasePath, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	return db, err
+}
+
+func DestroyDatabase() error {
+	databasePath, err := GetDatabasePath()
+	if err != nil {
+		return err
+	}
+
+	os.RemoveAll(databasePath)
+	return nil
 }
 
 func FetchCheckpoint(name string) (string, error) {
@@ -30,7 +49,7 @@ func FetchCheckpoint(name string) (string, error) {
 	defer db.Close()
 	path, err := db.Get([]byte(name), nil)
 	if err != nil {
-		if err == leveldb.ErrNotFound{
+		if err == leveldb.ErrNotFound {
 			return "", errors.New("jump: Checkpoint not found")
 		}
 	return "", err
@@ -60,7 +79,7 @@ func AddCheckpoint(name string, path string) error {
 	return nil
 }
 
-func RemoveCheckpoint(name string) error {
+func RemoveCheckpoint(name string, all bool) error {
 	walk, err := FetchCheckpoint(name)
 	if len(walk) == 0 {
 		return errors.New("jump: Checkpoint doesn't exist")
