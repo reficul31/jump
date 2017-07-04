@@ -2,6 +2,7 @@ package app
 
 import (
     "fmt"
+    "path"
     "path/filepath"
     "os"
     "errors"
@@ -11,13 +12,47 @@ import (
     "github.com/olekukonko/tablewriter"
 )
 
+// GetFolder is used to check if the folder exists in the same directory
+func GetFolder(name string) (string, error) {
+    dir, err := GetCurrentDirectory()
+    ErrorHandler(err)
+
+    dir = path.Join(dir, name)
+
+    _, err = os.Stat(dir)
+    if err == nil {
+        return dir, nil
+    }
+    if os.IsNotExist(err) {
+        return "", errors.New("jmp: Checkpoint not found")
+    }
+    ErrorHandler(err)
+    return "", nil
+}
+
+// ChangeDirectory is a wrapper function for fetch checkpoint which either changes the path or fetches the path from the database
+func ChangeDirectory(name string) (string, error) {
+    path, err := FetchCheckpoint(name)
+    if err == nil {
+        return path, nil
+    }
+    if err.Error() == "jump: Checkpoint not found" {
+        path, err = GetFolder(name)
+        if err == nil {
+            return path, nil
+        }
+    }
+
+    return "", err
+}
+
 // CleanArgs checks the arguments provided to the cli
 func CleanArgs(args []string, flags Flags) (string, error) {
     if len(args) != 1 {
         return "", errors.New("jmp: Invalid number of arguments provided")
     }
 
-    var validName = regexp.MustCompile(`^[a-zA-Z]+$`)
+    var validName = regexp.MustCompile(`^([a-zA-Z]+)$`)
     name := args[0]
     if !validName.MatchString(name) {
         return "", errors.New("jmp: Invalid name for checkpoint")

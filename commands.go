@@ -27,11 +27,13 @@ func PopulateFlags(jump *cli.App) {
 // PopulateCommands defines the commands of the cli
 func PopulateCommands(jump *cli.App) {
     jump.Action = func(c *cli.Context) {
-        flags.All = false
-        name, err := app.CleanArgs(c.Args(), flags)
-        app.ErrorHandler(err)
+        if len(c.Args()) != 1 {
+            app.WriteToConsole("jmp: Invalid number of arguments provided", 0)
+        }
 
-        path, err := app.FetchCheckpoint(name)
+        name := c.Args().First()
+
+        path, err := app.ChangeDirectory(name)
         app.ErrorHandler(err)
 
         app.WriteToConsole(path, 2)
@@ -39,10 +41,10 @@ func PopulateCommands(jump *cli.App) {
 
     jump.Commands = []cli.Command{
         {
-            Name: "add",
+            Name:    "add",
             Aliases: []string{"a"},
-            Usage: "Add a checkpoint to jump",
-            Action: func(c *cli.Context) {
+            Usage:   "Add a checkpoint to jump",
+            Action:  func(c *cli.Context) {
                 dir, err := app.GetCurrentDirectory()
                 app.ErrorHandler(err)
 
@@ -57,10 +59,10 @@ func PopulateCommands(jump *cli.App) {
             },
         },
         {
-            Name: "rm",
+            Name:    "rm",
             Aliases: []string{"r"},
-            Usage: "Remove a checkpoint",
-            Action: func(c *cli.Context) {
+            Usage:   "Remove a checkpoint",
+            Action:  func(c *cli.Context) {
                 if flags.All {
                     err := app.DestroyDatabase()
                     app.ErrorHandler(err)
@@ -76,10 +78,10 @@ func PopulateCommands(jump *cli.App) {
             },
         },
         {
-            Name: "show",
+            Name:    "show",
             Aliases: []string{"s"},
-            Usage: "Show all the saved checkpoints",
-            Action: func(c *cli.Context) {
+            Usage:   "Show all the saved checkpoints",
+            Action:  func(c *cli.Context) {
                 checkpoints, err := app.ShowCheckpoints()
                 app.ErrorHandler(err)
 
