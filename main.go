@@ -5,8 +5,6 @@ import (
   "github.com/urfave/cli"
 )
 
-var jump *cli.App
-
 func main() {
   jump := cli.NewApp()
   jump.Name = "Jump"

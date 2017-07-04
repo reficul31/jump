@@ -1,13 +1,8 @@
 package main
 
 import (
-  "fmt"
-  "path/filepath"
-  "os"
-  
   "github.com/reficul31/jump/app"
   "github.com/urfave/cli"
-  "github.com/olekukonko/tablewriter"
 )
 
 var err error
@@ -30,20 +25,14 @@ func PopulateFlags(jump *cli.App) {
 
 func PopulateCommands(jump *cli.App) {
   jump.Action = func(c *cli.Context) {
-    path, err := app.CleanArgs(c.Args().Get(0), flags)
-    if err != nil {
-      fmt.Println(err)
-      os.Exit(0)
-    }
-    path, err = app.FetchCheckpoint(c.Args().Get(0))
-    if err != nil {
-      fmt.Println(err)
-      os.Exit(0)
-    }
+    flags.All = false
+    name, err := app.CleanArgs(c.Args(), flags)
+    app.ErrorHandler(err)
+
+    path, err := app.FetchCheckpoint(name)
+    app.ErrorHandler(err)
     
-    fmt.Println(path)
-    os.Exit(2)
-    return
+    app.WriteToConsole(path, 2) 
   }
 
   jump.Commands = []cli.Command{
@@ -52,26 +41,17 @@ func PopulateCommands(jump *cli.App) {
       Aliases: []string{"a"},
       Usage: "Add a checkpoint to jump",
       Action: func(c *cli.Context) {
-        dir, err := filepath.Abs(filepath.Dir(os.Args[0]))
-        if err != nil {
-          fmt.Println("jmp: Cannot find the current directory")
-          os.Exit(0)
-        }
+        dir, err := app.GetCurrentDirectory()
+        app.ErrorHandler(err)
 
-        name, err := app.CleanArgs(c.Args().First(), flags)
-        if err != nil {
-          fmt.Println(err)
-          os.Exit(0)
-        }
+        flags.All = false
+        name, err := app.CleanArgs(c.Args(), flags)
+        app.ErrorHandler(err)
 
         err = app.AddCheckpoint(name, dir)
-        if err != nil {
-          fmt.Println(err)
-          os.Exit(0)
-        }
+        app.ErrorHandler(err)
 
-        fmt.Println("Checkpoint added")
-        return
+        app.WriteToConsole("Checkpoint added", 0)
       },
     },
     {
@@ -79,20 +59,18 @@ func PopulateCommands(jump *cli.App) {
       Aliases: []string{"r"},
       Usage: "Remove a checkpoint",
       Action: func(c *cli.Context) {
-        name, err := app.CleanArgs(c.Args().First(), flags)
-        if err != nil {
-          fmt.Println(err)
-          os.Exit(0)
+        if flags.All {
+          err := app.DestroyDatabase()
+          app.ErrorHandler(err)
+          app.WriteToConsole("Remove all checkpoints", 0)
         }
+        name, err := app.CleanArgs(c.Args(), flags)
+        app.ErrorHandler(err)
 
-        err = app.RemoveCheckpoint(name)
-        if err != nil {
-          fmt.Println(err)
-          os.Exit(0)
-        }
+        err = app.RemoveCheckpoint(name, flags.All)
+        app.ErrorHandler(err)
 
-        fmt.Println("Removed checkpoint", c.Args().First())
-        return
+        app.WriteToConsole("Removed checkpoint"+ name, 0)
       },
     },
     {
@@ -101,22 +79,13 @@ func PopulateCommands(jump *cli.App) {
       Usage: "Show all the saved checkpoints",
       Action: func(c *cli.Context) {
         checkpoints, err := app.ShowCheckpoints()
-        if err != nil {
-          fmt.Println(err)
-          os.Exit(0)
+        app.ErrorHandler(err)
+
+        if len(checkpoints) == 0 {
+          app.WriteToConsole("No checkpoints were found", 0)
         }
 
-        fmt.Println("Checkpoints found:", len(checkpoints))
-
-        table := tablewriter.NewWriter(os.Stdout)
-        table.SetHeader([]string{"Name", "Path"})
-
-        for _, v := range checkpoints {
-            table.Append([]string{v.Name, v.Path})
-        }
-
-        table.Render()
-        return
+        app.WriteToTable(checkpoints)
       },
     },
   }
