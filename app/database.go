@@ -85,24 +85,24 @@ func AddCheckpoint(name string, path string) error {
 }
 
 // RemoveCheckpoint removes a single checkpoint from the database
-func RemoveCheckpoint(name string) error {
+func RemoveCheckpoint(name string) (string, error) {
     walk, err := FetchCheckpoint(name)
     if len(walk) == 0 {
-        return errors.New("jump: Checkpoint doesn't exist")
+        return "", errors.New("jump: Checkpoint doesn't exist")
     }
 
     db, err := GetDatabase()
     if err != nil {
-        return err
+        return "", err
     }
 
     defer db.Close()
     err = db.Delete([]byte(name), nil)
     if err != nil {
-        return err
+        return "", err
     }
 
-    return nil
+    return walk, nil
 }
 
 // ShowCheckpoints return a list of all the checkpoints

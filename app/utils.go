@@ -63,8 +63,10 @@ func CleanArgs(args []string, flags Flags) (string, error) {
 }
 
 // WriteToConsole writes to the console with the given code
-func WriteToConsole(msg string, code int) {
-    fmt.Println(msg)
+func WriteToConsole(msgs []string, code int) {
+    for _, msg := range msgs{
+        fmt.Println(msg)
+    }
     os.Exit(code)
 }
 
@@ -80,7 +82,7 @@ func GetCurrentDirectory() (string, error) {
 // ErrorHandler used to handle the errors encountered by the CLI
 func ErrorHandler(err error) {
     if err != nil {
-        WriteToConsole(err.Error(), 0)
+        WriteToConsole([]string{err.Error()}, 0)
     }
 }
 

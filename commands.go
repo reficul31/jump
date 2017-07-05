@@ -2,6 +2,7 @@ package main
 
 import (
     "github.com/reficul31/jump/app"
+    "github.com/bclicn/color"
     "github.com/urfave/cli"
 )
 
@@ -28,7 +29,7 @@ func PopulateFlags(jump *cli.App) {
 func PopulateCommands(jump *cli.App) {
     jump.Action = func(c *cli.Context) {
         if len(c.Args()) != 1 {
-            app.WriteToConsole("jmp: Invalid number of arguments provided", 0)
+            app.WriteToConsole([]string{color.Red("jmp:")+" Invalid number of arguments provided"}, 0)
         }
 
         name := c.Args().First()
@@ -36,7 +37,7 @@ func PopulateCommands(jump *cli.App) {
         path, err := app.ChangeDirectory(name)
         app.ErrorHandler(err)
 
-        app.WriteToConsole(path, 2)
+        app.WriteToConsole([]string{path}, 2)
     }
 
     jump.Commands = []cli.Command{
@@ -55,7 +56,7 @@ func PopulateCommands(jump *cli.App) {
                 err = app.AddCheckpoint(name, dir)
                 app.ErrorHandler(err)
 
-                app.WriteToConsole("Checkpoint added", 0)
+                app.WriteToConsole([]string{"Checkpoint added", color.Cyan(name)+"\t"+dir}, 0)
             },
         },
         {
@@ -66,15 +67,15 @@ func PopulateCommands(jump *cli.App) {
                 if flags.All {
                     err := app.DestroyDatabase()
                     app.ErrorHandler(err)
-                    app.WriteToConsole("Remove all checkpoints", 0)
+                    app.WriteToConsole([]string{color.Yellow("Removed all checkpoints")}, 0)
                 }
                 name, err := app.CleanArgs(c.Args(), flags)
                 app.ErrorHandler(err)
 
-                err = app.RemoveCheckpoint(name)
+                dir, err := app.RemoveCheckpoint(name)
                 app.ErrorHandler(err)
 
-                app.WriteToConsole("Removed checkpoint "+ name, 0)
+                app.WriteToConsole([]string{"Removed checkpoint",color.Red(name)+"\t"+dir}, 0)
             },
         },
         {
@@ -86,7 +87,7 @@ func PopulateCommands(jump *cli.App) {
                 app.ErrorHandler(err)
 
                 if len(checkpoints) == 0 {
-                    app.WriteToConsole("No checkpoints were found", 0)
+                    app.WriteToConsole([]string{color.Red("jmp:")+" No checkpoints were found"}, 0)
                 }
 
                 app.WriteToTable(checkpoints)

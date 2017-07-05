@@ -12,6 +12,7 @@
     Packages Used    : (
         github.com/urfave/cli
         github.com/olekukonko/tablewriter
+        github.com/bclicn/color
         github.com/syndtr/goleveldb/leveldb
     )
     Insipred By      : Teleport(https://github.com/bollu/teleport)
