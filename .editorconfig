@@ -5,7 +5,6 @@ root = true
 end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace  = true
-insert_final_newline = true
 charset = utf-8
 
 [*.sh]
@@ -16,3 +15,7 @@ indent_size = 4
 [*.go]
 indent_style = space
 indent_size = 4
+
+[README.md]
+insert_final_newline = false
+trim_trailing_whitespace  = false
