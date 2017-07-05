@@ -74,7 +74,7 @@ func PopulateCommands(jump *cli.App) {
                 err = app.RemoveCheckpoint(name)
                 app.ErrorHandler(err)
 
-                app.WriteToConsole("Removed checkpoint"+ name, 0)
+                app.WriteToConsole("Removed checkpoint "+ name, 0)
             },
         },
         {
