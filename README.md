@@ -32,7 +32,7 @@ To add a checkpoint, you can use the following command.
 To remove a checkpoint, you can use the following command.
 > jp rm <name>
 
-To remove all the checkpoints set the ```--all`` flag to true.
+To remove all the checkpoints set the ```--all``` flag to true.
 > jp --all rm
 
 ##### Show Checkpoints
